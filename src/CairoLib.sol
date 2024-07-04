@@ -42,6 +42,20 @@ library CairoLib {
     /// @notice Performs a low-level call to a Cairo contract deployed on the Starknet appchain.
     /// @dev Used with intent to modify the state of the Cairo contract.
     /// @param functionName The name of the Cairo contract function to be called.
+    ///
+    /// @return returnData The return data from the Cairo contract function.
+    function callCairo(uint256 contractAddress, string memory functionName, uint256[] memory data)
+        internal
+        returns (bytes memory returnData)
+    {
+        uint256 functionSelector = uint256(keccak256(bytes(functionName))) % 2 ** 250;
+        return callCairo(contractAddress, functionSelector, data);
+    }
+
+
+    /// @notice Performs a low-level call to a Cairo contract deployed on the Starknet appchain.
+    /// @dev Used with intent to modify the state of the Cairo contract.
+    /// @param functionName The name of the Cairo contract function to be called.
     /// @return returnData The return data from the Cairo contract function.
     function callCairo(uint256 contractAddress, string memory functionName)
         internal
@@ -94,6 +108,22 @@ library CairoLib {
     /// callee contract is performed using the `msg.sender` of the calling contract.
     /// @param contractAddress The address of the Cairo contract.
     /// @param functionName The name of the Cairo contract function to be called.
+    /// @param data The input data for the Cairo contract function.
+    /// @return returnData The return data from the Cairo contract function.
+    function delegatecallCairo(uint256 contractAddress, string memory functionName, uint256[] memory data)
+        internal
+        returns (bytes memory returnData)
+    {
+        uint256 functionSelector = uint256(keccak256(bytes(functionName))) % 2 ** 250;
+        return delegatecallCairo(contractAddress, functionSelector, data);
+    }
+
+    /// @notice Performs a low-level delegatecall to a Cairo contract deployed on the Starknet appchain.
+    /// @dev Used with intent to modify the state of the Cairo contract.
+    /// @dev Using delegatecall preserves the context of the calling contract, and the execution of the
+    /// callee contract is performed using the `msg.sender` of the calling contract.
+    /// @param contractAddress The address of the Cairo contract.
+    /// @param functionName The name of the Cairo contract function to be called.
     /// @return returnData The return data from the Cairo contract function.
     function delegatecallCairo(uint256 contractAddress, string memory functionName)
         internal
@@ -135,6 +165,21 @@ library CairoLib {
         returns (bytes memory returnData)
     {
         uint256[] memory data = new uint256[](0);
+        return staticcallCairo(contractAddress, functionSelector, data);
+    }
+
+    /// @notice Performs a low-level call to a Cairo contract deployed on the Starknet appchain.
+    /// @dev Used with intent to read the state of the Cairo contract.
+    /// @param contractAddress The address of the Cairo contract.
+    /// @param functionName The name of the Cairo contract function to be called.
+    /// @param data The input data for the Cairo contract function.
+    /// @return returnData The return data from the Cairo contract function.
+    function staticcallCairo(uint256 contractAddress, string memory functionName, uint256[] memory data)
+        internal
+        view
+        returns (bytes memory returnData)
+    {
+        uint256 functionSelector = uint256(keccak256(bytes(functionName))) % 2 ** 250;
         return staticcallCairo(contractAddress, functionSelector, data);
     }
 

@@ -24,7 +24,7 @@ library CairoLib {
             abi.encodeWithSignature("call_contract(uint256,uint256,uint256[])", contractAddress, functionSelector, data);
 
         (bool success, bytes memory result) = CAIRO_PRECOMPILE_ADDRESS.call(callData);
-        require(success, "CairoLib: call_contract failed");
+        require(success, string(abi.encodePacked("CairoLib: call_contract failed. Result: ", result)));
 
         returnData = result;
     }
@@ -82,7 +82,7 @@ library CairoLib {
             abi.encodeWithSignature("call_contract(uint256,uint256,uint256[])", contractAddress, functionSelector, data);
 
         (bool success, bytes memory result) = CAIRO_PRECOMPILE_ADDRESS.delegatecall(callData);
-        require(success, "CairoLib: call_contract failed");
+        require(success, string(abi.encodePacked("CairoLib: call_contract failed. Result: ", result)));
 
         returnData = result;
     }
@@ -149,7 +149,7 @@ library CairoLib {
             abi.encodeWithSignature("call_contract(uint256,uint256,uint256[])", contractAddress, functionSelector, data);
 
         (bool success, bytes memory result) = CAIRO_PRECOMPILE_ADDRESS.staticcall(callData);
-        require(success, "CairoLib: call_contract failed");
+        require(success, string(abi.encodePacked("CairoLib: call_contract failed. Result: ", result)));
 
         returnData = result;
     }

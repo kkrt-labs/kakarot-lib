@@ -6,13 +6,7 @@ import "forge-std/Test.sol";
 import {CairoLib} from "src/CairoLib.sol";
 
 contract ByteArrayConverterTest is Test {
-    function testfoo() public {
-        bytes memory input = hex"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004d79546f6b656e0000000000000000000000000000000000000000000000000000000000000007";
-        string memory result = CairoLib.byteArrayToString(input);
-        assertEq(result, "MyToken");
-    }
-
-    function testMyTokenConversion() public {
+    function testMyTokenConversion() public view {
         bytes memory input = abi.encodePacked(
             uint256(0),  // fullWordsLength
             uint256(0x000000000000000000000000000000000000000000000000004d79546f6b656e),  // pendingWord
@@ -23,7 +17,7 @@ contract ByteArrayConverterTest is Test {
         assertEq(result, "MyToken", "Conversion failed for 'MyToken' input");
     }
 
-    function testMultiWordConversion() public {
+    function testMultiWordConversion() public view {
         bytes memory data = abi.encodePacked(
             uint256(1),  // fullWordsLength
             uint256(0x48656c6c6f20576f726c642c20746869732069732061206c6f6e6765722073),  // "Hello World, this is a longer s"
@@ -35,7 +29,7 @@ contract ByteArrayConverterTest is Test {
         assertEq(result, "Hello World, this is a longer string.", "Conversion failed for multi-word input");
     }
 
-    function testEmptyString() public {
+    function testEmptyString() public view {
         bytes memory input = abi.encodePacked(
             uint256(0),  // fullWordsLength
             uint256(0),  // pendingWord
@@ -64,9 +58,8 @@ contract ByteArrayConverterTest is Test {
         CairoLib.byteArrayToString(input);
     }
 
-    function testConcreteExample() public {
-        // test with a concrete example where
-
+    function testConcreteExample() public view {
+        // test with a concrete example returned for "MyToken"
         bytes memory input = hex"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004d79546f6b656e0000000000000000000000000000000000000000000000000000000000000007";
         string memory result = CairoLib.byteArrayToString(input);
         assertEq(result, "MyToken");

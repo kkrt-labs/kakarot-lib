@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.7.0 <0.9.0;
 
-// import console from forge
-import "forge-std/console.sol";
-
-
 library CairoLib {
     /// @dev The Cairo precompile contract's address.
     address constant CAIRO_PRECOMPILE_ADDRESS = 0x0000000000000000000000000000000000075001;
@@ -24,7 +20,7 @@ library CairoLib {
             abi.encodeWithSignature("call_contract(uint256,uint256,uint256[])", contractAddress, functionSelector, data);
 
         (bool success, bytes memory result) = CAIRO_PRECOMPILE_ADDRESS.call(callData);
-        require(success, string(abi.encodePacked("CairoLib: call_contract failed. Result: ", result)));
+        require(success, string(abi.encodePacked("CairoLib: call_contract failed with: ", result)));
 
         returnData = result;
     }
@@ -51,7 +47,6 @@ library CairoLib {
         uint256 functionSelector = uint256(keccak256(bytes(functionName))) % 2 ** 250;
         return callCairo(contractAddress, functionSelector, data);
     }
-
 
     /// @notice Performs a low-level call to a Cairo contract deployed on the Starknet appchain.
     /// @dev Used with intent to modify the state of the Cairo contract.
@@ -82,7 +77,7 @@ library CairoLib {
             abi.encodeWithSignature("call_contract(uint256,uint256,uint256[])", contractAddress, functionSelector, data);
 
         (bool success, bytes memory result) = CAIRO_PRECOMPILE_ADDRESS.delegatecall(callData);
-        require(success, string(abi.encodePacked("CairoLib: call_contract failed. Result: ", result)));
+        require(success, string(abi.encodePacked("CairoLib: call_contract failed with: ", result)));
 
         returnData = result;
     }
@@ -149,7 +144,7 @@ library CairoLib {
             abi.encodeWithSignature("call_contract(uint256,uint256,uint256[])", contractAddress, functionSelector, data);
 
         (bool success, bytes memory result) = CAIRO_PRECOMPILE_ADDRESS.staticcall(callData);
-        require(success, string(abi.encodePacked("CairoLib: call_contract failed. Result: ", result)));
+        require(success, string(abi.encodePacked("CairoLib: call_contract failed with: ", result)));
 
         returnData = result;
     }
@@ -257,11 +252,16 @@ library CairoLib {
 
     /// @notice Converts a Cairo ByteArray to a string
     /// @dev A ByteArray is represented as:
-    /// 1. An array of fully packed 31-byte words (data)
-    /// 2. A pending word (felt252) with < 31 bytes
-    /// 3. The length of the pending word (0-30 bytes)
-    /// @param data An Cairo representation of the ByteArray, serialized to individual bytes.
-    function byteArrayToString(bytes memory data) internal view returns (string memory) {
+    /**
+        pub struct ByteArray {
+                data: Array<bytes31>,
+                pending_word: felt252,
+                pending_word_len: usize,
+        }
+        where `data` is an array of 31-byte packed words, and `pending_word` word of size `pending_word_len`.
+    **/
+    /// @param data The Cairo representation of the ByteArray serialized to bytes.
+    function byteArrayToString(bytes memory data) internal pure returns (string memory) {
         require(data.length >= 96, "Invalid byte array length");
 
         uint256 fullWordsLength;
@@ -278,7 +278,6 @@ library CairoLib {
             pendingWordLen := mload(add(pendingWordPtr, 32))
         }
 
-
         require(pendingWordLen <= 31, "Invalid pending word length");
 
         uint256 totalLength = fullWordsLength * 31 + pendingWordLen;
@@ -287,25 +286,17 @@ library CairoLib {
 
         assembly {
             resultPtr := add(result, 32)
-        }
-
-        // Copy full words. Because of the Cairo -> Solidity conversion,
-        // each full word is 32 bytes long, but contains 31 bytes of information.
-        for (uint256 i = 0; i < fullWordsLength; i++) {
-            assembly {
+            // Copy full words. Because of the Cairo -> Solidity conversion,
+            // each full word is 32 bytes long, but contains 31 bytes of information.
+            for { let i := 0 } lt(i, fullWordsLength) { i := add(i, 1) } {
                 let word := mload(fullWordsPtr)
                 let storedWord := shl(8, word)
                 mstore(resultPtr, storedWord)
                 resultPtr := add(resultPtr, 31)
                 fullWordsPtr := add(fullWordsPtr, 32)
             }
-        }
-
-        // Copy pending word
-        if (pendingWordLen > 0) {
-            assembly {
-                mstore(resultPtr, shl(mul(sub(32, pendingWordLen), 8), pendingWord))
-            }
+            // Copy pending word
+            if iszero(eq(pendingWordLen, 0)) { mstore(resultPtr, shl(mul(sub(32, pendingWordLen), 8), pendingWord)) }
         }
 
         return string(result);

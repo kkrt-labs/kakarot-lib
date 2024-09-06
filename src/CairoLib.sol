@@ -193,52 +193,6 @@ library CairoLib {
         return staticcallCairo(contractAddress, functionSelector, data);
     }
 
-    /// @dev Performs a low-level call to a Cairo class declared on the Starknet appchain.
-    /// @param classHash The class hash of the Cairo class.
-    /// @param functionSelector The function selector of the Cairo class function to be called.
-    /// @param data The input data for the Cairo class function.
-    /// @return returnData The return data from the Cairo class function.
-    function libraryCallCairo(uint256 classHash, uint256 functionSelector, uint256[] memory data)
-        internal
-        view
-        returns (bytes memory returnData)
-    {
-        bytes memory callData =
-            abi.encodeWithSignature("library_call(uint256,uint256,uint256[])", classHash, functionSelector, data);
-
-        (bool success, bytes memory result) = CAIRO_PRECOMPILE_ADDRESS.staticcall(callData);
-        require(success, "CairoLib: library_call failed");
-
-        returnData = result;
-    }
-
-    /// @dev Performs a low-level call to a Cairo class declared on the Starknet appchain.
-    /// @param classHash The class hash of the Cairo class.
-    /// @param functionSelector The function selector of the Cairo class function to be called.
-    /// @return returnData The return data from the Cairo class function.
-    function libraryCallCairo(uint256 classHash, uint256 functionSelector)
-        internal
-        view
-        returns (bytes memory returnData)
-    {
-        uint256[] memory data = new uint256[](0);
-        return libraryCallCairo(classHash, functionSelector, data);
-    }
-
-    /// @dev Performs a low-level call to a Cairo class declared on the Starknet appchain.
-    /// @param classHash The class hash of the Cairo class.
-    /// @param functionName The name of the Cairo class function to be called.
-    /// @return returnData The return data from the Cairo class function.
-    function libraryCallCairo(uint256 classHash, string memory functionName)
-        internal
-        view
-        returns (bytes memory returnData)
-    {
-        uint256[] memory data = new uint256[](0);
-        uint256 functionSelector = uint256(keccak256(bytes(functionName))) % 2 ** 250;
-        return libraryCallCairo(classHash, functionSelector, data);
-    }
-
     /// @notice Performs a low-level call to send a message from the Kakarot to the Ethereum network.
     /// @param toAddress The address of the Ethereum contract to send the message to.
     /// @param payload The payload of the message to send to the Ethereum contract. The same payload will need
@@ -253,13 +207,14 @@ library CairoLib {
     /// @notice Converts a Cairo ByteArray to a string
     /// @dev A ByteArray is represented as:
     /**
-        pub struct ByteArray {
-                data: Array<bytes31>,
-                pending_word: felt252,
-                pending_word_len: usize,
-        }
-        where `data` is an array of 31-byte packed words, and `pending_word` word of size `pending_word_len`.
-    **/
+     * pub struct ByteArray {
+     *             data: Array<bytes31>,
+     *             pending_word: felt252,
+     *             pending_word_len: usize,
+     *     }
+     *     where `data` is an array of 31-byte packed words, and `pending_word` word of size `pending_word_len`.
+     *
+     */
     /// @param data The Cairo representation of the ByteArray serialized to bytes.
     function byteArrayToString(bytes memory data) internal pure returns (string memory) {
         require(data.length >= 96, "Invalid byte array length");

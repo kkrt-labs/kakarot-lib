@@ -194,13 +194,10 @@ library CairoLib {
     }
 
     /// @notice Performs a low-level call to send a message from the Kakarot to the Ethereum network.
-    /// @param toAddress The address of the Ethereum contract to send the message to.
     /// @param payload The payload of the message to send to the Ethereum contract. The same payload will need
     /// to be provided on L1 to consume the message.
-    function sendMessageToL1(address toAddress, bytes memory payload) internal {
-        bytes memory messageData = abi.encode(toAddress, payload);
-
-        (bool success,) = CAIRO_MESSAGING_ADDRESS.call(messageData);
+    function sendMessageToL1(bytes calldata payload) internal {
+        (bool success,) = CAIRO_MESSAGING_ADDRESS.call(payload);
         require(success, "CairoLib: sendMessageToL1 failed");
     }
 

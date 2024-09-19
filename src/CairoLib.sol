@@ -191,12 +191,13 @@ library CairoLib {
     /// @dev A ByteArray is represented as:
     /**
      * pub struct ByteArray {
-     *             data_len: felt252,
-     *             data: [<bytes31>],
-     *             pending_word: felt252,
-     *             pending_word_len: usize,
-     *     }
-     *     where `data` is an array of 31-byte packed words, and `pending_word` word of size `pending_word_len`.
+     *    full_words_len: felt252,
+     *    full_words: [<bytes31>],
+     *    pending_word: felt252,
+     *    pending_word_len: usize,
+     *  }
+     *  where `full_words` is an array of 31-byte packed words, and `pending_word` word of size `pending_word_len`.
+     *  Note that those full words are 32 bytes long, but only 31 bytes are used.
      */
     /// @param data The Cairo representation of the ByteArray serialized to bytes.
     function byteArrayToString(bytes memory data) internal pure returns (string memory) {

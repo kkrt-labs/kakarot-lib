@@ -3,9 +3,9 @@ pragma solidity >=0.8.0 <0.9.0;
 
 library CairoLib {
     /// @dev The Cairo precompile contract's address.
-    address constant CAIRO_MESSAGING_ADDRESS = 0x0000000000000000000000000000000000075002;
-    address constant MULTICALL_CAIRO_PRECOMPILE= 0x0000000000000000000000000000000000075003;
-    address constant CALL_CAIRO_PRECOMPILE= 0x0000000000000000000000000000000000075004;
+    address constant CAIRO_MESSAGE_PRECOMPILE = 0x0000000000000000000000000000000000075002;
+    address constant CAIRO_MULTICALL_PRECOMPILE= 0x0000000000000000000000000000000000075003;
+    address constant CAIRO_CALL_PRECOMPILE= 0x0000000000000000000000000000000000075004;
 
     struct CairoCall {
         uint256 contractAddress;
@@ -22,7 +22,7 @@ library CairoLib {
     function callCairo(uint256 contractAddress, uint256 functionSelector, uint256[] memory data) internal returns (bytes memory) {
         bytes memory callData = abi.encode(contractAddress, functionSelector, data);
 
-        (bool success, bytes memory result) = CALL_CAIRO_PRECOMPILE.call(callData);
+        (bool success, bytes memory result) = CAIRO_CALL_PRECOMPILE.call(callData);
         require(success, string(abi.encodePacked("CairoLib: cairo call failed with: ", result)));
 
         return result;
@@ -60,7 +60,7 @@ library CairoLib {
     function staticcallCairo(uint256 contractAddress, uint256 functionSelector, uint256[] memory data) internal view returns (bytes memory) {
         bytes memory callData = abi.encode(contractAddress, functionSelector, data);
 
-        (bool success, bytes memory result) = CALL_CAIRO_PRECOMPILE.staticcall(callData);
+        (bool success, bytes memory result) = CAIRO_CALL_PRECOMPILE.staticcall(callData);
         require(success, string(abi.encodePacked("CairoLib: cairo static call failed with: ", result)));
 
         return result;
@@ -104,7 +104,7 @@ library CairoLib {
             bytes memory encodedCall = abi.encode(calls[i].contractAddress, calls[i].functionSelector, calls[i].data);
             callData = bytes.concat(callData, encodedCall);
         }
-        (bool success,) = MULTICALL_CAIRO_PRECOMPILE.call(callData);
+        (bool success,) = CAIRO_MULTICALL_PRECOMPILE.call(callData);
         require(success, "CairoLib: multicallCairo failed");
     }
 
@@ -119,7 +119,7 @@ library CairoLib {
             bytes memory encodedCall = abi.encode(calls[i].contractAddress, calls[i].functionSelector, calls[i].data);
             callData = bytes.concat(callData, encodedCall);
         }
-        (bool success,) = MULTICALL_CAIRO_PRECOMPILE.staticcall(callData);
+        (bool success,) = CAIRO_MULTICALL_PRECOMPILE.staticcall(callData);
         require(success, "CairoLib: multicallCairoStatic failed");
     }
 
@@ -127,7 +127,7 @@ library CairoLib {
     /// @param payload The payload of the message to send to the Ethereum contract. The same payload will need
     /// to be provided on L1 to consume the message.
     function sendMessageToL1(bytes memory payload) internal {
-        (bool success,) = CAIRO_MESSAGING_ADDRESS.call(payload);
+        (bool success,) = CAIRO_MESSAGE_PRECOMPILE.call(payload);
         require(success, "CairoLib: sendMessageToL1 failed");
     }
 

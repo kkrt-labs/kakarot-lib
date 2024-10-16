@@ -94,9 +94,9 @@ library CairoLib {
     }
 
 
-    /// @notice Performs a multicall to a Cairo contract deployed on Starknet.
+    /// @notice Performs a multicall to Cairo contracts deployed on Starknet.
     /// @dev Used with intent to modify the state of the Cairo contract.
-    /// @param calls The array of CairoCall structs to be called.
+    /// @param calls The array of CairoCall structs to be executed.
     function multicallCairo(CairoCall[] memory calls) internal {
         uint256 n_calls = calls.length;
         bytes memory callData = abi.encode(n_calls);
@@ -108,10 +108,10 @@ library CairoLib {
         require(success, "CairoLib: multicallCairo failed");
     }
 
-    /// @notice Performs a multicall to a Cairo contract deployed on Starknet.
+    /// @notice Performs a multicall to Cairo contracts deployed on Starknet.
     /// @dev Used with intent to read the state of the Cairo contract.
     /// @dev **This can still mutate the underlying Cairo contract state.**
-    /// @param calls The array of CairoCall structs to be called.
+    /// @param calls The array of CairoCall structs to be executed.
     function multicallCairoStatic(CairoCall[] memory calls) internal view {
         uint256 n_calls = calls.length;
         bytes memory callData = abi.encode(n_calls);

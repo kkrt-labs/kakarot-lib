@@ -3,169 +3,69 @@ pragma solidity >=0.8.0 <0.9.0;
 
 library CairoLib {
     /// @dev The Cairo precompile contract's address.
-    address constant CAIRO_PRECOMPILE_ADDRESS = 0x0000000000000000000000000000000000075001;
-    address constant CAIRO_MESSAGING_ADDRESS = 0x0000000000000000000000000000000000075002;
+    address constant CAIRO_MESSAGE_PRECOMPILE = 0x0000000000000000000000000000000000075002;
+    address constant CAIRO_MULTICALL_PRECOMPILE= 0x0000000000000000000000000000000000075003;
+    address constant CAIRO_CALL_PRECOMPILE= 0x0000000000000000000000000000000000075004;
 
-    /// @notice Performs a low-level call to a Cairo contract deployed on the Starknet appchain.
+    struct CairoCall {
+        uint256 contractAddress;
+        uint256 functionSelector;
+        uint256[] data;
+    }
+
+    /// @notice Performs a low-level call to a Cairo contract deployed on Starknet.
     /// @dev Used with intent to modify the state of the Cairo contract.
     /// @param contractAddress The address of the Cairo contract.
     /// @param functionSelector The function selector of the Cairo contract function to be called.
     /// @param data The input data for the Cairo contract function.
     /// @return The return data from the Cairo contract function.
-    function callCairo(uint256 contractAddress, uint256 functionSelector, uint256[] memory data)
-        internal
-        returns (bytes memory)
-    {
+    function callCairo(uint256 contractAddress, uint256 functionSelector, uint256[] memory data) internal returns (bytes memory) {
         bytes memory callData = abi.encode(contractAddress, functionSelector, data);
 
-        (bool success, bytes memory result) = CAIRO_PRECOMPILE_ADDRESS.call(callData);
+        (bool success, bytes memory result) = CAIRO_CALL_PRECOMPILE.call(callData);
         require(success, string(abi.encodePacked("CairoLib: cairo call failed with: ", result)));
 
         return result;
     }
 
-    /// @notice Performs a low-level call to a Cairo contract deployed on the Starknet appchain.
-    /// @dev Used with intent to modify the state of the Cairo contract.
-    /// @param contractAddress The address of the Cairo contract.
-    /// @param functionSelector The function selector of the Cairo contract function to be called.
-    /// @return The return data from the Cairo contract function.
+    function callCairo(CairoCall memory call)
+        internal
+        returns (bytes memory)
+    {
+        return callCairo(call.contractAddress, call.functionSelector, call.data);
+    }
+
     function callCairo(uint256 contractAddress, uint256 functionSelector) internal returns (bytes memory) {
         uint256[] memory data = new uint256[](0);
         return callCairo(contractAddress, functionSelector, data);
     }
 
-    /// @notice Performs a low-level call to a Cairo contract deployed on the Starknet appchain.
-    /// @dev Used with intent to modify the state of the Cairo contract.
-    /// @param functionName The name of the Cairo contract function to be called.
-    /// @return The return data from the Cairo contract function.
-    function callCairo(uint256 contractAddress, string memory functionName, uint256[] memory data)
-        internal
-        returns (bytes memory)
-    {
-        uint256 functionSelector = uint256(keccak256(bytes(functionName))) % 2 ** 250;
-        return callCairo(contractAddress, functionSelector, data);
-    }
-
-    /// @notice Performs a low-level call to a Cairo contract deployed on the Starknet appchain.
-    /// @dev Used with intent to modify the state of the Cairo contract.
-    /// @param functionName The name of the Cairo contract function to be called.
-    /// @return The return data from the Cairo contract function.
     function callCairo(uint256 contractAddress, string memory functionName) internal returns (bytes memory) {
         uint256[] memory data = new uint256[](0);
         uint256 functionSelector = uint256(keccak256(bytes(functionName))) % 2 ** 250;
         return callCairo(contractAddress, functionSelector, data);
     }
 
-    /// @notice Performs a low-level delegatecall to a Cairo contract deployed on the Starknet appchain.
-    /// @dev Used with intent to modify the state of the Cairo contract.
-    /// @dev Using delegatecall preserves the context of the calling contract, and the execution of the
-    /// callee contract is performed using the `msg.sender` of the calling contract.
+    function callCairo(uint256 contractAddress, string memory functionName, uint256[] memory data) internal returns (bytes memory) {
+        uint256 functionSelector = uint256(keccak256(bytes(functionName))) % 2 ** 250;
+        return callCairo(contractAddress, functionSelector, data);
+    }
+
+    /// @notice Performs a low-level static call to a Cairo contract deployed on Starknet.
+    /// @dev Used with intent to read the state of the Cairo contract.
     /// @param contractAddress The address of the Cairo contract.
     /// @param functionSelector The function selector of the Cairo contract function to be called.
     /// @param data The input data for the Cairo contract function.
     /// @return The return data from the Cairo contract function.
-    function delegatecallCairo(uint256 contractAddress, uint256 functionSelector, uint256[] memory data)
-        internal
-        returns (bytes memory)
-    {
+    function staticcallCairo(uint256 contractAddress, uint256 functionSelector, uint256[] memory data) internal view returns (bytes memory) {
         bytes memory callData = abi.encode(contractAddress, functionSelector, data);
 
-        (bool success, bytes memory result) = CAIRO_PRECOMPILE_ADDRESS.delegatecall(callData);
-        require(success, string(abi.encodePacked("CairoLib: cairo call failed with: ", result)));
+        (bool success, bytes memory result) = CAIRO_CALL_PRECOMPILE.staticcall(callData);
+        require(success, string(abi.encodePacked("CairoLib: cairo static call failed with: ", result)));
 
         return result;
     }
 
-    /// @notice Performs a low-level delegatecall to a Cairo contract deployed on the Starknet appchain.
-    /// @dev Used with intent to modify the state of the Cairo contract.
-    /// @dev Using delegatecall preserves the context of the calling contract, and the execution of the
-    /// callee contract is performed using the `msg.sender` of the calling contract.
-    /// @param contractAddress The address of the Cairo contract.
-    /// @param functionSelector The function selector of the Cairo contract function to be called.
-    /// @return The return data from the Cairo contract function.
-    function delegatecallCairo(uint256 contractAddress, uint256 functionSelector) internal returns (bytes memory) {
-        uint256[] memory data = new uint256[](0);
-        return delegatecallCairo(contractAddress, functionSelector, data);
-    }
-
-    /// @notice Performs a low-level delegatecall to a Cairo contract deployed on the Starknet appchain.
-    /// @dev Used with intent to modify the state of the Cairo contract.
-    /// @dev Using delegatecall preserves the context of the calling contract, and the execution of the
-    /// callee contract is performed using the `msg.sender` of the calling contract.
-    /// @param contractAddress The address of the Cairo contract.
-    /// @param functionName The name of the Cairo contract function to be called.
-    /// @param data The input data for the Cairo contract function.
-    /// @return The return data from the Cairo contract function.
-    function delegatecallCairo(uint256 contractAddress, string memory functionName, uint256[] memory data)
-        internal
-        returns (bytes memory)
-    {
-        uint256 functionSelector = uint256(keccak256(bytes(functionName))) % 2 ** 250;
-        return delegatecallCairo(contractAddress, functionSelector, data);
-    }
-
-    /// @notice Performs a low-level delegatecall to a Cairo contract deployed on the Starknet appchain.
-    /// @dev Used with intent to modify the state of the Cairo contract.
-    /// @dev Using delegatecall preserves the context of the calling contract, and the execution of the
-    /// callee contract is performed using the `msg.sender` of the calling contract.
-    /// @param contractAddress The address of the Cairo contract.
-    /// @param functionName The name of the Cairo contract function to be called.
-    /// @return The return data from the Cairo contract function.
-    function delegatecallCairo(uint256 contractAddress, string memory functionName) internal returns (bytes memory) {
-        uint256[] memory data = new uint256[](0);
-        uint256 functionSelector = uint256(keccak256(bytes(functionName))) % 2 ** 250;
-        return delegatecallCairo(contractAddress, functionSelector, data);
-    }
-
-    /// @notice Performs a low-level call to a Cairo contract deployed on the Starknet appchain.
-    /// @dev Used with intent to read the state of the Cairo contract.
-    /// @param contractAddress The address of the Cairo contract.
-    /// @param functionSelector The function selector of the Cairo contract function to be called.
-    /// @param data The input data for the Cairo contract function.
-    /// @return The return data from the Cairo contract function.
-    function staticcallCairo(uint256 contractAddress, uint256 functionSelector, uint256[] memory data)
-        internal
-        view
-        returns (bytes memory)
-    {
-        bytes memory callData = abi.encode(contractAddress, functionSelector, data);
-
-        (bool success, bytes memory result) = CAIRO_PRECOMPILE_ADDRESS.staticcall(callData);
-        require(success, string(abi.encodePacked("CairoLib: cairo call failed with: ", result)));
-
-        return result;
-    }
-
-    /// @notice Performs a low-level call to a Cairo contract deployed on the Starknet appchain.
-    /// @dev Used with intent to read the state of the Cairo contract.
-    /// @param contractAddress The address of the Cairo contract.
-    /// @param functionSelector The function selector of the Cairo contract function to be called.
-    /// @return The return data from the Cairo contract function.
-    function staticcallCairo(uint256 contractAddress, uint256 functionSelector) internal view returns (bytes memory) {
-        uint256[] memory data = new uint256[](0);
-        return staticcallCairo(contractAddress, functionSelector, data);
-    }
-
-    /// @notice Performs a low-level call to a Cairo contract deployed on the Starknet appchain.
-    /// @dev Used with intent to read the state of the Cairo contract.
-    /// @param contractAddress The address of the Cairo contract.
-    /// @param functionName The name of the Cairo contract function to be called.
-    /// @param data The input data for the Cairo contract function.
-    /// @return The return data from the Cairo contract function.
-    function staticcallCairo(uint256 contractAddress, string memory functionName, uint256[] memory data)
-        internal
-        view
-        returns (bytes memory)
-    {
-        uint256 functionSelector = uint256(keccak256(bytes(functionName))) % 2 ** 250;
-        return staticcallCairo(contractAddress, functionSelector, data);
-    }
-
-    /// @notice Performs a low-level call to a Cairo contract deployed on the Starknet appchain.
-    /// @dev Used with intent to read the state of the Cairo contract.
-    /// @param contractAddress The address of the Cairo contract.
-    /// @param functionName The name of the Cairo contract function to be called.
-    /// @return The return data from the Cairo contract function.
     function staticcallCairo(uint256 contractAddress, string memory functionName)
         internal
         view
@@ -176,11 +76,58 @@ library CairoLib {
         return staticcallCairo(contractAddress, functionSelector, data);
     }
 
+    function staticcallCairo(uint256 contractAddress, string memory functionName, uint256[] memory data)
+        internal
+        view
+        returns (bytes memory)
+    {
+        uint256 functionSelector = uint256(keccak256(bytes(functionName))) % 2 ** 250;
+        return staticcallCairo(contractAddress, functionSelector, data);
+    }
+
+    function staticcallCairo(CairoCall memory call)
+        internal
+        view
+        returns (bytes memory)
+    {
+        return staticcallCairo(call.contractAddress, call.functionSelector, call.data);
+    }
+
+
+    /// @notice Performs a multicall to Cairo contracts deployed on Starknet.
+    /// @dev Used with intent to modify the state of the Cairo contract.
+    /// @param calls The array of CairoCall structs to be executed.
+    function multicallCairo(CairoCall[] memory calls) internal {
+        uint256 n_calls = calls.length;
+        bytes memory callData = abi.encode(n_calls);
+        for (uint32 i = 0; i < n_calls; i++) {
+            bytes memory encodedCall = abi.encode(calls[i].contractAddress, calls[i].functionSelector, calls[i].data);
+            callData = bytes.concat(callData, encodedCall);
+        }
+        (bool success,) = CAIRO_MULTICALL_PRECOMPILE.call(callData);
+        require(success, "CairoLib: multicallCairo failed");
+    }
+
+    /// @notice Performs a multicall to Cairo contracts deployed on Starknet.
+    /// @dev Used with intent to read the state of the Cairo contract.
+    /// @dev **This can still mutate the underlying Cairo contract state.**
+    /// @param calls The array of CairoCall structs to be executed.
+    function multicallCairoStatic(CairoCall[] memory calls) internal view {
+        uint256 n_calls = calls.length;
+        bytes memory callData = abi.encode(n_calls);
+        for (uint32 i = 0; i < n_calls; i++) {
+            bytes memory encodedCall = abi.encode(calls[i].contractAddress, calls[i].functionSelector, calls[i].data);
+            callData = bytes.concat(callData, encodedCall);
+        }
+        (bool success,) = CAIRO_MULTICALL_PRECOMPILE.staticcall(callData);
+        require(success, "CairoLib: multicallCairoStatic failed");
+    }
+
     /// @notice Performs a low-level call to send a message from the Kakarot to the Ethereum network.
     /// @param payload The payload of the message to send to the Ethereum contract. The same payload will need
     /// to be provided on L1 to consume the message.
     function sendMessageToL1(bytes memory payload) internal {
-        (bool success,) = CAIRO_MESSAGING_ADDRESS.call(payload);
+        (bool success,) = CAIRO_MESSAGE_PRECOMPILE.call(payload);
         require(success, "CairoLib: sendMessageToL1 failed");
     }
 

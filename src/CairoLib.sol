@@ -19,7 +19,7 @@ library CairoLib {
     /// @param functionSelector The function selector of the Cairo contract function to be called.
     /// @param data The input data for the Cairo contract function.
     /// @return The return data from the Cairo contract function.
-    function callCairo(uint256 contractAddress, uint256 functionSelector, uint256[] memory data) internal returns (bytes memory) {
+    function callCairo(uint256 contractAddress, uint256 functionSelector, uint256[] calldata data) internal returns (bytes memory) {
         bytes memory callData = abi.encode(contractAddress, functionSelector, data);
 
         (bool success, bytes memory result) = CAIRO_CALL_PRECOMPILE.call(callData);
@@ -28,25 +28,20 @@ library CairoLib {
         return result;
     }
 
-    function callCairo(CairoCall memory call)
-        internal
-        returns (bytes memory)
-    {
+    function callCairo(CairoCall calldata call) internal returns (bytes memory) {
         return callCairo(call.contractAddress, call.functionSelector, call.data);
     }
 
     function callCairo(uint256 contractAddress, uint256 functionSelector) internal returns (bytes memory) {
-        uint256[] memory data = new uint256[](0);
-        return callCairo(contractAddress, functionSelector, data);
+        return callCairo(contractAddress, functionSelector);
     }
 
-    function callCairo(uint256 contractAddress, string memory functionName) internal returns (bytes memory) {
-        uint256[] memory data = new uint256[](0);
+    function callCairo(uint256 contractAddress, string calldata functionName) internal returns (bytes memory) {
         uint256 functionSelector = uint256(keccak256(bytes(functionName))) % 2 ** 250;
-        return callCairo(contractAddress, functionSelector, data);
+        return callCairo(contractAddress, functionSelector);
     }
 
-    function callCairo(uint256 contractAddress, string memory functionName, uint256[] memory data) internal returns (bytes memory) {
+    function callCairo(uint256 contractAddress, string calldata functionName, uint256[] calldata data) internal returns (bytes memory) {
         uint256 functionSelector = uint256(keccak256(bytes(functionName))) % 2 ** 250;
         return callCairo(contractAddress, functionSelector, data);
     }
@@ -57,7 +52,7 @@ library CairoLib {
     /// @param functionSelector The function selector of the Cairo contract function to be called.
     /// @param data The input data for the Cairo contract function.
     /// @return The return data from the Cairo contract function.
-    function staticcallCairo(uint256 contractAddress, uint256 functionSelector, uint256[] memory data) internal view returns (bytes memory) {
+    function staticcallCairo(uint256 contractAddress, uint256 functionSelector, uint256[] calldata data) internal view returns (bytes memory) {
         bytes memory callData = abi.encode(contractAddress, functionSelector, data);
 
         (bool success, bytes memory result) = CAIRO_CALL_PRECOMPILE.staticcall(callData);
@@ -66,42 +61,39 @@ library CairoLib {
         return result;
     }
 
-    function staticcallCairo(uint256 contractAddress, string memory functionName)
-        internal
-        view
-        returns (bytes memory)
-    {
-        uint256[] memory data = new uint256[](0);
-        uint256 functionSelector = uint256(keccak256(bytes(functionName))) % 2 ** 250;
-        return staticcallCairo(contractAddress, functionSelector, data);
-    }
-
-    function staticcallCairo(uint256 contractAddress, string memory functionName, uint256[] memory data)
-        internal
-        view
-        returns (bytes memory)
-    {
-        uint256 functionSelector = uint256(keccak256(bytes(functionName))) % 2 ** 250;
-        return staticcallCairo(contractAddress, functionSelector, data);
-    }
-
-    function staticcallCairo(CairoCall memory call)
-        internal
-        view
-        returns (bytes memory)
-    {
+    function staticcallCairo(CairoCall calldata call) internal view returns (bytes memory) {
         return staticcallCairo(call.contractAddress, call.functionSelector, call.data);
     }
 
+    function staticcallCairo(uint256 contractAddress, uint256 functionSelector) internal view returns (bytes memory) {
+
+        return staticcallCairo(contractAddress, functionSelector);
+    }
+
+    function staticcallCairo(uint256 contractAddress, string calldata functionName) internal view returns (bytes memory) {
+
+        uint256 functionSelector = uint256(keccak256(bytes(functionName))) % 2 ** 250;
+        return staticcallCairo(contractAddress, functionSelector);
+    }
+
+    function staticcallCairo(uint256 contractAddress, string calldata functionName, uint256[] calldata data) internal view returns (bytes memory) {
+        uint256 functionSelector = uint256(keccak256(bytes(functionName))) % 2 ** 250;
+        return staticcallCairo(contractAddress, functionSelector, data);
+    }
 
     /// @notice Performs a multicall to Cairo contracts deployed on Starknet.
     /// @dev Used with intent to modify the state of the Cairo contract.
     /// @param calls The array of CairoCall structs to be executed.
-    function multicallCairo(CairoCall[] memory calls) internal {
+    function multicallCairo(CairoCall[] calldata calls) internal {
         uint256 n_calls = calls.length;
         bytes memory callData = abi.encode(n_calls);
         for (uint32 i = 0; i < n_calls; i++) {
-            bytes memory encodedCall = abi.encode(calls[i].contractAddress, calls[i].functionSelector, calls[i].data);
+            CairoCall calldata call = calls[i];
+            bytes memory encodedCall = abi.encode(
+                call.contractAddress,
+                call.functionSelector,
+                call.data
+            );
             callData = bytes.concat(callData, encodedCall);
         }
         (bool success,) = CAIRO_MULTICALL_PRECOMPILE.call(callData);
@@ -110,13 +102,17 @@ library CairoLib {
 
     /// @notice Performs a multicall to Cairo contracts deployed on Starknet.
     /// @dev Used with intent to read the state of the Cairo contract.
-    /// @dev **This can still mutate the underlying Cairo contract state.**
     /// @param calls The array of CairoCall structs to be executed.
-    function multicallCairoStatic(CairoCall[] memory calls) internal view {
+    function multicallCairoStatic(CairoCall[] calldata calls) internal view {
         uint256 n_calls = calls.length;
         bytes memory callData = abi.encode(n_calls);
         for (uint32 i = 0; i < n_calls; i++) {
-            bytes memory encodedCall = abi.encode(calls[i].contractAddress, calls[i].functionSelector, calls[i].data);
+            CairoCall calldata call = calls[i];
+            bytes memory encodedCall = abi.encode(
+                call.contractAddress,
+                call.functionSelector,
+                call.data
+            );
             callData = bytes.concat(callData, encodedCall);
         }
         (bool success,) = CAIRO_MULTICALL_PRECOMPILE.staticcall(callData);

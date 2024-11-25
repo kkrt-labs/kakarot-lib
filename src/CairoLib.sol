@@ -3,7 +3,6 @@ pragma solidity >=0.8.0 <0.9.0;
 
 library CairoLib {
     /// @dev The Cairo precompile contract's address.
-    address constant CAIRO_MESSAGE_PRECOMPILE = 0x0000000000000000000000000000000000075002;
     address constant CAIRO_MULTICALL_PRECOMPILE= 0x0000000000000000000000000000000000075003;
     address constant CAIRO_CALL_PRECOMPILE= 0x0000000000000000000000000000000000075004;
 
@@ -121,14 +120,6 @@ library CairoLib {
         }
         (bool success,) = CAIRO_MULTICALL_PRECOMPILE.staticcall(callData);
         require(success, "CairoLib: multicallCairoStatic failed");
-    }
-
-    /// @notice Performs a low-level call to send a message from the Kakarot to the Ethereum network.
-    /// @param payload The payload of the message to send to the Ethereum contract. The same payload will need
-    /// to be provided on L1 to consume the message.
-    function sendMessageToL1(bytes memory payload) internal {
-        (bool success,) = CAIRO_MESSAGE_PRECOMPILE.call(payload);
-        require(success, "CairoLib: sendMessageToL1 failed");
     }
 
     /// @notice Converts a Cairo ByteArray to a string

@@ -169,9 +169,7 @@ library CairoLib {
             // Copy full words. Because of the Cairo -> Solidity conversion,
             // each full word is 32 bytes long, but contains 31 bytes of information.
             for { let i := 0 } lt(i, fullWordsLength) { i := add(i, 1) } {
-                let word := mload(fullWordsPtr)
-                let storedWord := shl(8, word)
-                mstore(resultPtr, storedWord)
+                mcopy(resultPtr, add(fullWordsPtr, 1), 31)
                 resultPtr := add(resultPtr, 31)
                 fullWordsPtr := add(fullWordsPtr, 32)
             }

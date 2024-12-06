@@ -144,15 +144,14 @@ library CairoLib {
 
         uint256 fullWordsLength;
         uint256 fullWordsPtr;
-        uint256 pendingWord;
+        uint256 pendingWordPtr;
         uint256 pendingWordLen;
 
         assembly {
             fullWordsLength := mload(add(data, 32))
             let fullWordsByteLength := mul(fullWordsLength, 32)
             fullWordsPtr := add(data, 64)
-            let pendingWordPtr := add(fullWordsPtr, fullWordsByteLength)
-            pendingWord := mload(pendingWordPtr)
+            pendingWordPtr := add(fullWordsPtr, fullWordsByteLength)
             pendingWordLen := mload(add(pendingWordPtr, 32))
         }
         // Calculate the expected length of data
@@ -174,7 +173,9 @@ library CairoLib {
                 fullWordsPtr := add(fullWordsPtr, 32)
             }
             // Copy pending word
-            if iszero(eq(pendingWordLen, 0)) { mstore(resultPtr, shl(mul(sub(32, pendingWordLen), 8), pendingWord)) }
+            if iszero(eq(pendingWordLen, 0)) {
+                mcopy(resultPtr, add(pendingWordPtr, sub(32, pendingWordLen)), pendingWordLen)
+            }
         }
 
         return string(result);
